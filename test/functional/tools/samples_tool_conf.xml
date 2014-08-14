@@ -23,4 +23,5 @@
   <tool file="collection_mixed_param.xml" />
   <tool file="collection_two_paired.xml" />
   <tool file="collection_optional_param.xml" />
+  <tool file="collection_creates_pair.xml" />
 </toolbox>

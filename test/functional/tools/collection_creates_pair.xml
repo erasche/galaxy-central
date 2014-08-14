@@ -1,0 +1,22 @@
+<tool id="collection_creates_pair" name="collection_creates_pair" version="0.1.0">
+  <command>
+    echo "This is forward." > $forward;
+    echo "This is not forward." > $reverse
+  </command>
+  <inputs>
+    <param name="ignored" type="integer" value="0" />
+  </inputs>
+  <outputs>
+    <collection name="paired_output" type="list" label="My Pair">
+      <data name="forward" format="txt" />
+      <data name="reverse" format="txt" />
+    </collection>
+  </outputs>
+  <tests>
+    <test>
+      <param name="ignored" value="42" />
+      <output_dataset>
+      </output_dataset>
+    </test>
+  </tests>
+</tool>
