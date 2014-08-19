@@ -378,6 +378,11 @@ class Configuration( object ):
         self.fluent_port = int( kwargs.get( 'fluent_port', 24224 ) )
         # visualization plugin framework
         self.visualization_plugins_directory = kwargs.get( 'visualization_plugins_directory', None )
+        self.proxy_session_map = self.resolve_path( kwargs.get( "dynamic_proxy_session_map", "database/session_map.json" ) )
+        self.manage_dynamic_proxy = string_as_bool( kwargs.get( "dynamic_proxy_manage", "True" ) )  # Set to false if being launched externally
+        self.dynamic_proxy_bind_port = int( kwargs.get( "dynamic_proxy_bind_port", "8800" ) )
+        self.dynamic_proxy_bind_ip = kwargs.get( "dynamic_proxy_bind_ip", "0.0.0.0" )
+
         # Default chunk size for chunkable datatypes -- 64k
         self.display_chunk_size = int( kwargs.get( 'display_chunk_size', 65536) )
 
