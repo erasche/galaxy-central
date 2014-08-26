@@ -24,6 +24,7 @@ from galaxy.web.base.controller import BaseUIController, SharableMixin, UsesStor
 from galaxy.web.framework import form
 from galaxy.web.framework.helpers import grids, time_ago
 from galaxy.web.framework.helpers import to_unicode
+from galaxy.workflow.modules import WorkflowModuleInjector
 from galaxy.workflow.modules import module_factory, is_tool_module_type
 from galaxy.workflow.run import invoke
 from galaxy.workflow.run import WorkflowRunConfig
@@ -1273,46 +1274,16 @@ class WorkflowController( BaseUIController, SharableMixin, UsesStoredWorkflowMix
                 # If kwargs were provided, the states for each step should have
                 # been POSTed
                 # List to gather values for the template
+                module_injector = WorkflowModuleInjector( trans )
                 invocations = []
                 for (kwargs, multi_input_keys) in _expand_multiple_inputs(kwargs):
                     for step in workflow.steps:
-                        step.upgrade_messages = {}
-                        # Connections by input name
-                        input_connections_by_name = {}
-                        for conn in step.input_connections:
-                            input_name = conn.input_name
-                            if not input_name in input_connections_by_name:
-                                input_connections_by_name[input_name] = []
-                            input_connections_by_name[input_name].append(conn)
-                        step.input_connections_by_name = input_connections_by_name
                         # Extract just the arguments for this step by prefix
                         p = "%s|" % step.id
                         l = len(p)
                         step_args = dict( ( k[l:], v ) for ( k, v ) in kwargs.iteritems() if k.startswith( p ) )
-                        step_errors = None
-                        if step.type == 'tool' or step.type is None:
-                            module = module_factory.from_workflow_step( trans, step )
-                            # Fix any missing parameters
-                            step.upgrade_messages = module.check_and_update_state()
-                            if step.upgrade_messages:
-                                has_upgrade_messages = True
-                            # Any connected input needs to have value DummyDataset (these
-                            # are not persisted so we need to do it every time)
-                            module.add_dummy_datasets( connections=step.input_connections )
-                            # Get the tool
-                            tool = module.tool
-                            # Get the state
-                            step.state = state = module.state
-                            # Get old errors
-                            old_errors = state.inputs.pop( "__errors__", {} )
-                            # Update the state
-                            step_errors = tool.update_state( trans, tool.inputs, step.state.inputs, step_args,
-                                                             update_only=True, old_errors=old_errors )
-                        else:
-                            # Fix this for multiple inputs
-                            module = step.module = module_factory.from_workflow_step( trans, step )
-                            state = step.state = module.decode_runtime_state( trans, step_args.pop( "tool_state" ) )
-                            step_errors = module.update_runtime_state( trans, state, step_args )
+                        step_errors = module_injector.inject( step, step_args )
+                        state = step.state
                         if step_errors:
                             errors[step.id] = state.inputs["__errors__"] = step_errors
                     if 'run_workflow' in kwargs and not errors:
