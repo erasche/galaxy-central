@@ -639,3 +639,23 @@ class Xlsx(Binary):
 
 Binary.register_sniffable_binary_format("xlsx", "xlsx", Xlsx)
 
+class RData(Binary):
+    """Class for RData files"""
+    file_ext="RData"
+    def sniff( self, filename ):
+        # RData is compressed in gzip format and must not be uncompressed in Galaxy.
+        with open(filename, 'rb') as handle:
+            # Try reading plain, in case non-gzipped
+            data = handle.read(4)
+            if data == "RDX2":
+                return True
+            # Otherwise, gzipped
+            try:
+                f = gzip.GzipFile(fileobj=handle)
+                data = f.read(4)
+                return data == 'RDX2'
+            except:
+                return False
+        return False
+
+Binary.register_sniffable_binary_format("RData", "RData", RData)
